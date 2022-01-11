@@ -36,21 +36,19 @@ def uart_config(config_file="/boot/config.txt", cmdline_file="/boot/cmdline.txt"
                 uart_configed = True
             elif line == "dtoverlay=disable-bt":
                 bt_disabled = True
-    if uart_configed is False:
+    if not uart_configed:
         with open(config_file, 'a') as file:
             file.write("\nuart_enable=1")
-    if bt_disabled is False:
+    if not bt_disabled:
         with open(config_file, 'a') as file:
             file.write("\ndtoverlay=disable-bt")
     os.system("sudo systemctl disable hciuart")
     with open(cmdline_file, 'r') as file:
-        line_list = []
-        for line in file:
-            param_list = line.split(" ")
-            for n in range(len(param_list)):
-                if "console=serial0" in param_list[n]:
-                    param_list.pop(n)
-            line_list.append(' '.join(param_list))
+        line_list = file.read().splitlines()
+        param_list = line_list[0].split(" ")
+        if "console=serial0,115200" in param_list:
+            param_list.remove("console=serial0,115200")
+        line_list.append(' '.join(param_list))
     with open(cmdline_file, 'w') as file:
         for line in line_list:
             file.write(line)
@@ -62,10 +60,8 @@ def hat_config(config_file="/boot/config.txt"):
         for line in file:
             if line == "dtparam=audio=on\n" or line == "dtparam=audio=on":
                 line_list.append("#dtparam=audio=on\n")
-                print("line editted")
             else:
                 line_list.append(line)
-                print("line not editted")
     with open(config_file, 'w') as file:
         for line in line_list:
             file.write(line)
