@@ -16,7 +16,7 @@ def install():
         sys.exit("\n\nUnable to install pyaudio and/or dependancies\n\n")
 
     try:
-        os.system("sudo pip install numpy")
+        os.system("sudo apt install python3-matplotlib")
     except:
         sys.exit("\n\nUnable to install numpy\n\n")
 
@@ -68,7 +68,7 @@ def hat_config(config_file="/boot/config.txt"):
 
 
 def codec_zero_config(mode_file='IQaudIO_Codec_AUXIN_record_and_HP_playback.state'):
-    codec_mode.CodecMode(mode_file)
+    codec_mode.CodecMode(mode_file=mode_file)
 
 
 def reboot():
