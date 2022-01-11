@@ -1,0 +1,7 @@
+blah=0
+blah5-1=f
+sixtennBlop=0
+#oof
+chaff=0
+#dtparam=audio=on
+uart_enable=1
