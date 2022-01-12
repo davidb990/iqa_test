@@ -25,6 +25,7 @@ class FFT:
         self.l_psd_norm = None
         self.r_psd_norm = None
         self.freq = None
+        self.scoped_freq = None
         if channels == 2:
             self.stereo = True
             self.mono = False
@@ -45,8 +46,8 @@ class FFT:
     def fft(self):
         self.data = np.frombuffer(self.stream.read(self.chunk), dtype=np.int16)
         self.stream.close()
-        freq = self.rate * np.arange(self.chunk) / self.chunk
-        scoped_freq = self.freq_range(freq, lower_lim=20, upper_lim=16000)
+        self.freq = self.rate * np.arange(self.chunk) / self.chunk
+        scoped_freq = self.freq_range(self.freq, lower_lim=20, upper_lim=16000)
         l = np.arange(1, np.floor(self.chunk / 2), dtype='int')
         if self.stereo is True:
             l_data = self.data[0::2]
@@ -64,7 +65,8 @@ class FFT:
             psd = (fhat * np.conj(fhat)) / self.chunk
             self.mono_psd = psd[l]
             self.mono_psd_norm = self.psd_norm(psd, lower_lim=20, upper_lim=16000)[l]
-        self.freq = scoped_freq[l]
+        self.scoped_freq = scoped_freq[l]
+        self.freq = self.freq[l]
 
     def det_freq(self):
         if self.freq is None:
@@ -79,17 +81,17 @@ class FFT:
             self.fft()
         peak_thresh = 1 - thresh
         if self.stereo is True:
-            if peak_thresh > self.l_psd_norm[np.argmax(self.l_psd)]:
+            if peak_thresh >= self.l_psd_norm[np.argmax(self.l_psd)]:
                 l_pass = False
             else:
                 l_pass = True
-            if peak_thresh > self.r_psd_norm[np.argmax(self.r_psd)]:
+            if peak_thresh >= self.r_psd_norm[np.argmax(self.r_psd)]:
                 r_pass = False
             else:
                 r_pass = True
             return l_pass, r_pass
         else:
-            if peak_thresh > self.mono_psd_norm[np.argmax(self.mono_psd)]:
+            if peak_thresh >= self.mono_psd_norm[np.argmax(self.mono_psd)]:
                 return False
             else:
                 return True
