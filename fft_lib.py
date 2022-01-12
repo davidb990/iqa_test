@@ -104,7 +104,7 @@ class FFT:
         else:
             fig, axs = plt.subplots(2)
             fig.suptitle(title)
-            axs[0].plot(x0, y1)
+            axs[0].plot(x0, y0)
             axs[1].plot(x1, y1)
             if scale == 'log':
                 axs[0].set_xscale('log')
