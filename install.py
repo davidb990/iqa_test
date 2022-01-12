@@ -18,7 +18,7 @@ def install():
     try:
         os.system("sudo apt install python3-matplotlib")
     except:
-        sys.exit("\n\nUnable to install numpy\n\n")
+        sys.exit("\n\nUnable to install numpy & matplotlib\n\n")
 
     try:
         os.system("sudo pip3 install pyserial")

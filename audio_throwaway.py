@@ -14,3 +14,5 @@ Tone(880, 1)
 devices = AudioDevice()
 
 pprint(devices.supported_device("", "input"))
+
+fft.fft_plot()

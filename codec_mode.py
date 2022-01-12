@@ -15,14 +15,14 @@ class CodecMode:
 
     def set_mode(self, mode_file: str):
         try:
+            os.system("git clone https://github.com/iqaudio/Pi-Codec.git")
             os.system("sudo alsactl restore -f Pi-Codec/" + str(mode_file))
         except:
-            os.system("git clone https://github.com/iqaudio/Pi-Codec.git")
             os.system("sudo alsactl restore -f Pi-Codec/" + str(mode_file))
 
     def __init__(self, aux_in=False, aux_out=False, playback=False,
                  mems=False, stereo_mic=False, mode_file=None):
-        if mode_file is not None and mode_file in self.file_list:
+        if mode_file in self.file_list:
             self.set_mode(mode_file)
         elif aux_in is True:
             self.set_mode(self.file_list[0])
