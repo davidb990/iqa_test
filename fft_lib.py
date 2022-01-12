@@ -81,17 +81,17 @@ class FFT:
             self.fft()
         peak_thresh = 1 - thresh
         if self.stereo is True:
-            if peak_thresh >= self.l_psd_norm[np.argmax(self.l_psd)]:
+            if peak_thresh >= self.l_psd_norm[np.argmax(self.l_psd_norm)]:
                 l_pass = False
             else:
                 l_pass = True
-            if peak_thresh >= self.r_psd_norm[np.argmax(self.r_psd)]:
+            if peak_thresh >= self.r_psd_norm[np.argmax(self.r_psd_norm)]:
                 r_pass = False
             else:
                 r_pass = True
             return l_pass, r_pass
         else:
-            if peak_thresh >= self.mono_psd_norm[np.argmax(self.mono_psd)]:
+            if peak_thresh >= self.mono_psd_norm[np.argmax(self.mono_psd_norm)]:
                 return False
             else:
                 return True
@@ -117,7 +117,7 @@ class FFT:
         if self.freq is None:
             self.fft()
         if self.stereo:
-            self.plotter('Stereo Semilog Plot of the FFT', scale='log', x0=self.freq, x1=self.freq, y0=self.l_psd_norm,
+            self.plotter('Stereo Semilog Plot of the FFT', scale='log', x0=self.scoped_freq, x1=self.scoped_freq, y0=self.l_psd_norm,
                          y1=self.r_psd_norm, double_plot=True)
         else:
-            self.plotter('Mono Semilog Plot of the FFT', scale='log', x0=self.freq, y0=self.mono_psd_norm)
+            self.plotter('Mono Semilog Plot of the FFT', scale='log', x0=self.scoped_freq, y0=self.mono_psd_norm)

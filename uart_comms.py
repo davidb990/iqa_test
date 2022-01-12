@@ -81,3 +81,5 @@ class UART:
             self.fft_rx(rx)
         elif "TONE?" in rx:
             self.tone_rx(rx)
+        elif "TEST?" in rx:
+            self.write("TEST\n")
