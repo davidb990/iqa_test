@@ -29,9 +29,9 @@ class UART:
         txt = self.uart.readall()
         try:
             txt = str(txt)  # tries to make the information a string to allow for easier manipulation
-            if txt[0:2] is "b'" and txt[-3:] is "'\n":
+            if txt[0:2] == "b'" and txt[-3:] == "'\n":
                 txt = self.bytes_to_string(txt)
-            elif txt[-2:] is "\n":
+            elif txt[-2:] == "\n":
                 txt = txt[:-2]
         except:
             print("Error turning response into string!")  # prints error but allows program to keep running
