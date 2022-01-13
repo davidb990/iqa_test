@@ -10,6 +10,10 @@ import codec_mode
 
 def install():
     try:
+        os.system("sudo apt update")
+    except:
+        sys.exit("Failed to update the Pi")
+    try:
         os.system("sudo apt-get install python-pyaudio")
         os.system("sudo apt-get install python3-pyaudio")
     except:
@@ -48,6 +52,7 @@ def uart_config(config_file="/boot/config.txt", cmdline_file="/boot/cmdline.txt"
         param_list = line_list[0].split(" ")
         if "console=serial0,115200" in param_list:
             param_list.remove("console=serial0,115200")
+        line_list.clear()
         line_list.append(' '.join(param_list))
     with open(cmdline_file, 'w') as file:
         for line in line_list:
@@ -96,8 +101,6 @@ class Zero2:
 
 class Pi4:
     def __init__(self, DigiAmp=False, DACPlus=False, CodecZero=False):
-        install()
-        uart_config()
         if CodecZero is True:
             print("Installing Pi4 Codec Zero")
             codec_zero_config(mode_file="IQaudIO_Codec_Playback_Only.state")
@@ -108,6 +111,8 @@ class Pi4:
                 print("Installing Pi4 DACPlus")
             elif DigiAmp is True:
                 print("Installing Pi4 DigiAmp")
+        install()
+        uart_config()
         reboot()
 
 
@@ -134,3 +139,4 @@ while True:
         break
     else:
         print("Error! Please enter either 1,2,3 or 4")
+
