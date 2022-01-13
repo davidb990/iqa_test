@@ -29,9 +29,9 @@ class UART:
         txt = self.uart.readall()
         try:
             txt = str(txt)  # tries to make the information a string to allow for easier manipulation
-            if txt[0:2] == "b'" and txt[-3:] == "'\n":
+            if txt[0:2] == "b'" and txt[-3:] == "\r'":
                 txt = self.bytes_to_string(txt)
-            elif txt[-2:] == "\n":
+            elif txt[-2:] == "\r":
                 txt = txt[:-2]
         except:
             print("Error turning response into string!")  # prints error but allows program to keep running
@@ -40,19 +40,29 @@ class UART:
     def close(self):
         self.uart.close()
 
+    def rx_conf(self):
+        self.write("RGR\r")
+
+    def conf_tx(self) -> bool:
+        if self.readall() == "RGR":
+            return True
+        else:
+            return False
+
     def fft_rx(self, rx, device=None):
+        self.rx_conf()
         rx = rx.split(":")
         thresh = rx[1]
         fft = fft_lib.FFT(device)
         freq = fft.det_freq()
         noise_thresh = fft.above_bgnd_thresh(thresh)
         if freq is type(tuple) and noise_thresh is type(tuple):
-            freq = str(freq[0])+","+str(freq[1])
+            freq = str(freq[0]) + "," + str(freq[1])
             noise_thresh = str(noise_thresh[0]) + "," + str(noise_thresh[1])
-        self.write("FREQ:{}:TRSH:{}\n".format(freq, noise_thresh))
+        self.write("FREQ:{}:TRSH:{}\r".format(freq, noise_thresh))
 
     def fft_tx_w(self, thresh=0.25):
-        self.write("TRSH:{}:FREQ?\n".format(thresh))
+        self.write("TRSH:{}:FREQ?\r".format(thresh))
 
     def fft_tx_r(self):
         tx_r = self.readall()
@@ -67,13 +77,23 @@ class UART:
             return freq, above_thresh
 
     def tone_rx(self, rx):
+        self.rx_conf()
+        tone = Tone()
         rx = rx.split(":")
         freq = rx[1]
         duration = rx[3]
-        Tone(freq, duration)
+        try:
+            freq.split(",")
+            l_freq = int(freq[0])
+            r_freq = int(freq[1])
+            tone.stereotone(l_freq, r_freq, duration)
+        except:
+            tone.monotone(freq, duration)
 
     def tone_tx(self, freq, duration):
-        self.write("FREQ:{}:DURA:{}:TONE?\n".format(freq, duration))
+        if isinstance(freq, list) or isinstance(freq, tuple):
+            freq = str(freq[0]) + "," + str(freq[1])
+        self.write("FREQ:{}:DURA:{}:TONE?\r".format(freq, duration))
 
     def rx_check(self):
         rx = self.readall()
@@ -82,4 +102,5 @@ class UART:
         elif "TONE?" in rx:
             self.tone_rx(rx)
         elif "TEST?" in rx:
-            self.write("TEST\n")
+            self.write("TEST\r")
+

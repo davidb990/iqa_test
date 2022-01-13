@@ -5,3 +5,6 @@ sixtennBlop=0
 chaff=0
 #dtparam=audio=on
 uart_enable=1
+dtoverlay=disable-bt
+uart_enable=1
+dtoverlay=disable-bt
