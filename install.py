@@ -28,7 +28,11 @@ def install():
         os.system("sudo pip3 install pyserial")
     except:
         sys.exit("\n\nUnable to install pyserial\n\n")
-
+    try:
+        os.system("sudo apt full-upgrade")
+    except:
+        sys.exit("Unable to upgrade the Pi")
+        
 
 def uart_config(config_file="/boot/config.txt", cmdline_file="/boot/cmdline.txt"):
     with open(config_file, 'r') as file:
