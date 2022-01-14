@@ -1,6 +1,7 @@
 import serial
 import fft_lib
 from tone import Tone
+import time
 
 
 class UART:
@@ -9,11 +10,12 @@ class UART:
         att_lim = connect_attempts
         while att_lim >= att_no:
             try:
-                self.uart = serial.Serial(com_port, 9600, timeout=0.5)
+                self.uart = serial.Serial(com_port, baudrate=115200, timeout=0.5)
                 break
             except:
-                print("Unable to connect over UART! Waiting 5 seconds and retrying.\nAttempt number {} of {}"
+                print("Unable to connect over UART! Waiting 1 second and retrying.\nAttempt number {} of {}"
                       .format(att_no, att_lim))
+                time.sleep(1)
                 att_no += 1
 
     def bytes_to_string(self, txt: str) -> str:
@@ -29,10 +31,10 @@ class UART:
         txt = self.uart.readall()
         try:
             txt = str(txt)  # tries to make the information a string to allow for easier manipulation
-            if txt[0:2] == "b'" and txt[-3:] == "\r'":
+            if txt[0:2] == "b'" and txt[-2:] == "\r'":
                 txt = self.bytes_to_string(txt)
-            elif txt[-2:] == "\r":
-                txt = txt[:-2]
+            elif txt[0:2] == "b'" and txt[-3:] == "\\r'":
+                txt = txt[2:-3]
         except:
             print("Error turning response into string!")  # prints error but allows program to keep running
         return txt
@@ -44,21 +46,23 @@ class UART:
         self.write("RGR\r")
 
     def conf_tx(self) -> bool:
-        if self.readall() == "RGR":
+        readback = self.readall()
+        if "RGR" in str(readback):
             return True
         else:
             return False
 
-    def fft_rx(self, rx, device=None):
+    def fft_rx(self, rx, device=None, channels=2):
         self.rx_conf()
         rx = rx.split(":")
         thresh = rx[1]
-        fft = fft_lib.FFT(device)
+        fft = fft_lib.FFT(device=device, channels=channels)
         freq = fft.det_freq()
-        noise_thresh = fft.above_bgnd_thresh(thresh)
-        if freq is type(tuple) and noise_thresh is type(tuple):
+        noise_thresh = fft.above_bgnd_thresh(float(thresh))
+        if isinstance(freq, tuple) and isinstance(noise_thresh, tuple):
             freq = str(freq[0]) + "," + str(freq[1])
             noise_thresh = str(noise_thresh[0]) + "," + str(noise_thresh[1])
+        time.sleep(0.4)
         self.write("FREQ:{}:TRSH:{}\r".format(freq, noise_thresh))
 
     def fft_tx_w(self, thresh=0.25):
@@ -103,4 +107,3 @@ class UART:
             self.tone_rx(rx)
         elif "TEST?" in rx:
             self.write("TEST\r")
-

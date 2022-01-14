@@ -11,6 +11,8 @@ class Tone:
         self.rate = rate
 
     def monotone(self, freq, duration):
+        duration = float(duration)
+        freq = np.float32(freq)
         tone = (np.sin(2 * np.pi * np.linspace(0, 1, self.rate) * freq)).astype(np.float32)
         stream = self.audio.open(format=self.data_format,
                                  output_device_index=self.device,
@@ -24,6 +26,9 @@ class Tone:
         stream.close()
 
     def stereotone(self, l_freq, r_freq, duration):
+        duration = float(duration)
+        l_freq = np.float32(l_freq)
+        r_freq = np.float32(r_freq)
         l_tone = (np.sin(2 * np.pi * np.linspace(0, 1, self.rate) * l_freq)).astype(np.float32)
         r_tone = (np.sin(2 * np.pi * np.linspace(0, 1, self.rate) * r_freq)).astype(np.float32)
         stereo_tone = np.array([val for pair in zip(l_tone, r_tone) for val in pair], dtype=np.float32)

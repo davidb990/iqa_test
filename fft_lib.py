@@ -79,7 +79,7 @@ class FFT:
     def above_bgnd_thresh(self, thresh=0.25):
         if self.freq is None:
             self.fft()
-        peak_thresh = 1 - thresh
+        peak_thresh = 1 - float(thresh)
         if self.stereo is True:
             if peak_thresh >= self.l_psd_norm[np.argmax(self.l_psd_norm)]:
                 l_pass = False
