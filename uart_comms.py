@@ -86,12 +86,13 @@ class UART:
         rx = rx.split(":")
         freq = rx[1]
         duration = rx[3]
-        try:
+        if "," in freq:
             freq.split(",")
-            l_freq = int(freq[0])
-            r_freq = int(freq[1])
+            l_freq = float(freq[0])
+            r_freq = float(freq[1])
             tone.stereotone(l_freq, r_freq, duration)
-        except:
+        else:
+            freq = float(freq)
             tone.monotone(freq, duration)
 
     def tone_tx(self, freq, duration):
