@@ -118,6 +118,8 @@ class UART:
             relay = "aux_in"
         elif rx[1] == "MIC":
             relay = "mic"
+        elif rx[1] == "ALL":
+            relay = "all"
         else:
             sys.exit("Invalid relay!")
         if rx[2] == "ON":
@@ -141,6 +143,8 @@ class UART:
             relay_msg = "AUXI"
         elif relay.lower() == "mic":
             relay_msg = "MIC"
+        elif relay.lower() == "all":
+            relay_msg = "ALL"
         else:
             sys.exit("Invalid relay!")
         if on_off.lower() == "on" or on_off.lower() == "off":
