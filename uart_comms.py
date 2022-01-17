@@ -2,6 +2,8 @@ import serial
 import fft_lib
 from tone import Tone
 import time
+import sys
+import relay_ctl
 
 
 class UART:
@@ -100,6 +102,53 @@ class UART:
             freq = str(freq[0]) + "," + str(freq[1])
         self.write("FREQ:{}:DURA:{}:TONE?\r".format(freq, duration))
 
+    def relay_rx(self, rx):
+        self.rx_conf()
+        relay_sel = relay_ctl.Relay()
+        rx = rx.split(":")
+        if rx[1] == "AUXO":
+            relay = "aux_out"
+        elif rx[1] == "RCA":
+            relay = "rca"
+        elif rx[1] == "PHON":
+            relay = "phones"
+        elif rx[1] == "XLR":
+            relay = "xlr"
+        elif rx[1] == "AUXI":
+            relay = "aux_in"
+        elif rx[1] == "MIC":
+            relay = "mic"
+        else:
+            sys.exit("Invalid relay!")
+        if rx[2] == "ON":
+            on_off = "on"
+        elif rx[2] == "OFF":
+            on_off = "off"
+        else:
+            sys.exit("Invalid relay state!")
+        relay_sel.relay(relay, on_off)
+
+    def relay_tx(self, relay, on_off):
+        if relay.lower() == "aux_out":
+            relay_msg = "AUXO"
+        elif relay.lower() == "rca":
+            relay_msg = "RCA"
+        elif relay.lower() == "phones":
+            relay_msg = "PHON"
+        elif relay.lower() == "xlr":
+            relay_msg = "XLR"
+        elif relay.lower() == "aux_in":
+            relay_msg = "AUXI"
+        elif relay.lower() == "mic":
+            relay_msg = "MIC"
+        else:
+            sys.exit("Invalid relay!")
+        if on_off.lower() == "on" or on_off.lower() == "off":
+            output = on_off.upper()
+        else:
+            sys.exit("Invalid choice of relay mode")
+        self.write("RLAY:{}:{}\r".format(relay_msg, output))
+
     def rx_check(self):
         rx = self.readall()
         if "FREQ?" in rx:
@@ -108,3 +157,5 @@ class UART:
             self.tone_rx(rx)
         elif "TEST?" in rx:
             self.write("TEST\r")
+        elif "RLAY" in rx:
+            self.relay_rx(rx)

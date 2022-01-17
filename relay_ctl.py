@@ -5,7 +5,7 @@ GPIO.setmode(GPIO.BCM)
 
 
 class Relay:
-    def __init__(self, relay0=8, relay1=7, relay2=9, relay3=10, relay4=11, relay5=26):
+    def __init__(self, relay0=26, relay1=8, relay2=7, relay3=11, relay4=9, relay5=10):
         self.aux_out = relay0
         self.rca = relay1
         self.phones = relay2
