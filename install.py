@@ -63,6 +63,18 @@ def uart_config(config_file="/boot/config.txt", cmdline_file="/boot/cmdline.txt"
             file.write(line)
 
 
+def startup_config(startup_file="/home/pi/iqa_test/zero2_loop.py", bashrc="/home/pi/.bashrc"):
+    with open(bashrc, 'r') as file:
+        startup_set = False
+        for line in file:
+            line.rstrip("\n")
+            if line == "sudo python {}".format(startup_file):
+                startup_set = True
+    if not startup_set:
+        with open(bashrc, 'a') as file:
+            file.write("\nsudo python {}".format(startup_file))
+
+
 def hat_config(config_file="/boot/config.txt"):
     with open(config_file, 'r') as file:
         line_list = []
@@ -100,6 +112,7 @@ class Zero2:
         uart_config()
         hat_config()
         codec_zero_config()
+        startup_config()
         reboot()
 
 

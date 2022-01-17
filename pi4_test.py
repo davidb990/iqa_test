@@ -26,7 +26,7 @@ while True:
                         pass
                 break
             else:
-                if n == max_attempts-1:
+                if n == max_attempts - 1:
                     print("Zero 2 failed to confirm receipt of command.")
     elif command == 2:
         duration = float(input("Tone duration:\n"))
@@ -52,7 +52,7 @@ while True:
                 print("Command received")
                 break
             else:
-                if n == max_attempts-1:
+                if n == max_attempts - 1:
                     print("Zero 2 failed to confirm receipt of command.")
     elif command == 3:
         relay_list = ["aux_out", "rca", "phones", "xlr", "aux_in",
@@ -64,19 +64,29 @@ while True:
         except:
             print("Invalid Input! Please enter either 1 to 7.")
             continue
-        relay_sel = relay_sel-1
+        relay_sel = relay_sel - 1
         relay = relay_list[relay_sel]
         on_off = input("Enter 1 for on and 2 for off.\n")
-        if on_off == 1 or on_off == 2:
-            pass
+        if int(on_off) == 1:
+            mode = "on"
+        elif int(on_off) == 2:
+            mode = "off"
         else:
             print("Invalid input, enter 1 or 2")
             continue
         try:
-            uart.relay_tx(relay, on_off)
+            uart.relay_tx(relay, mode)
+            for n in range(max_attempts):
+                if uart.conf_tx():
+                    print("Command received")
+                    break
+                else:
+                    if n == max_attempts - 1:
+                        print("Zero 2 failed to confirm receipt of command.")
             print("Relay switched")
         except:
             print("Invalid input!")
+            continue
     else:
         print("Invalid Input! Please enter either 1,2 or 3.")
         continue
