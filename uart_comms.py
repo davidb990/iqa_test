@@ -87,7 +87,7 @@ class UART:
         freq = rx[1]
         duration = rx[3]
         if "," in freq:
-            freq.split(",")
+            freq = freq.split(",")
             l_freq = float(freq[0])
             r_freq = float(freq[1])
             tone.stereotone(l_freq, r_freq, duration)
