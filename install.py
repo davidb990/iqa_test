@@ -13,17 +13,21 @@ def install():
         os.system("sudo apt update")
     except:
         sys.exit("Failed to update the Pi")
+
     try:
-        os.system("sudo apt-get install python-pyaudio")
-        os.system("sudo apt-get install python3-pyaudio")
+        os.system("sudo apt-get install -y python-pyaudio")
+        os.system("sudo apt-get install -y  python3-pyaudio")
     except:
         sys.exit("\n\nUnable to install pyaudio and/or dependancies\n\n")
 
     try:
-        os.system("sudo apt install python3-matplotlib")
+        os.system("sudo apt install -y python3-matplotlib")
     except:
         sys.exit("\n\nUnable to install numpy & matplotlib\n\n")
-
+    try:
+        os.system("sudo apt install -y pip")
+    except:
+        sys.exit("\n\nUnable to install pip\n\n")
     try:
         os.system("sudo pip3 install pyserial")
     except:
