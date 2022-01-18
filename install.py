@@ -10,7 +10,7 @@ import codec_mode
 
 def install():
     try:
-        os.system("sudo apt update")
+        os.system("sudo apt update -y")
     except:
         sys.exit("Failed to update the Pi")
 
@@ -32,10 +32,12 @@ def install():
         os.system("sudo pip3 install pyserial")
     except:
         sys.exit("\n\nUnable to install pyserial\n\n")
+    '''
     try:
-        os.system("sudo apt full-upgrade")
+        os.system("sudo apt full-upgrade -y")
     except:
         sys.exit("Unable to upgrade the Pi")
+    '''
 
 
 def uart_config(config_file="/boot/config.txt", cmdline_file="/boot/cmdline.txt"):
