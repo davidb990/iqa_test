@@ -68,9 +68,9 @@ def uart_config(config_file="/boot/config.txt", cmdline_file="/boot/cmdline.txt"
 
 
 def startup_config():
-    os.system("sudo cp /home/pi/iqa_test/loop_wrap.state /lib/systemd/system/")
+    os.system("sudo cp /home/pi/iqa_test/loop_wrap.service /lib/systemd/system/")
     os.system("sudo systemctl daemon-reload")
-    os.system("sudo systemctl enable loop_wrap.state")
+    os.system("sudo systemctl enable loop_wrap.service")
 
 
 def hat_config(config_file="/boot/config.txt"):
