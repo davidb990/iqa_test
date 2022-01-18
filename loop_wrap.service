@@ -1,0 +1,9 @@
+[Unit]
+Description=Wrapper for zero2_loop.py
+After=multi-user.target
+
+[Service]
+ExecStart=/user/bin/python3 /home/pi/iqa_test/loop_wrap.py
+
+[Install]
+WantedBy=multi-user.target

@@ -67,22 +67,10 @@ def uart_config(config_file="/boot/config.txt", cmdline_file="/boot/cmdline.txt"
             file.write(line)
 
 
-def startup_config(startup_file="/home/pi/iqa_test/zero2_loop.py", bashrc="/home/pi/.bashrc"):
-    '''
-    try:
-        os.system("sudo raspi-config nonint do_boot_behaviour B2")
-    except:
-        print("Unable to enable autologin")
-    '''
-    with open(bashrc, 'r') as file:
-        startup_set = False
-        for line in file:
-            line.rstrip("\n")
-            if line == "sudo python {}".format(startup_file):
-                startup_set = True
-    if not startup_set:
-        with open(bashrc, 'a') as file:
-            file.write("\nsudo python {}".format(startup_file))
+def startup_config():
+    os.system("sudo cp /home/pi/iqa_test/loop_wrap.state /lib/systemd/system/")
+    os.system("sudo systemctl daemon-reload")
+    os.system("sudo systemctl enable loop_wrap.state")
 
 
 def hat_config(config_file="/boot/config.txt"):
