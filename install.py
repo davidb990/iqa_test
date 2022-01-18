@@ -68,10 +68,12 @@ def uart_config(config_file="/boot/config.txt", cmdline_file="/boot/cmdline.txt"
 
 
 def startup_config(startup_file="/home/pi/iqa_test/zero2_loop.py", bashrc="/home/pi/.bashrc"):
+    '''
     try:
         os.system("sudo raspi-config nonint do_boot_behaviour B2")
     except:
         print("Unable to enable autologin")
+    '''
     with open(bashrc, 'r') as file:
         startup_set = False
         for line in file:
