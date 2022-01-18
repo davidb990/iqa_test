@@ -38,7 +38,6 @@ def install():
         sys.exit("Unable to upgrade the Pi")
 
 
-
 def uart_config(config_file="/boot/config.txt", cmdline_file="/boot/cmdline.txt"):
     with open(config_file, 'r') as file:
         uart_configed = False
@@ -69,6 +68,10 @@ def uart_config(config_file="/boot/config.txt", cmdline_file="/boot/cmdline.txt"
 
 
 def startup_config(startup_file="/home/pi/iqa_test/zero2_loop.py", bashrc="/home/pi/.bashrc"):
+    try:
+        os.system("sudo raspi-config nonint do_boot_behaviour B4")
+    except:
+        print("Unable to enable autologin")
     with open(bashrc, 'r') as file:
         startup_set = False
         for line in file:
@@ -161,4 +164,3 @@ while True:
         break
     else:
         print("Error! Please enter either 1,2,3 or 4")
-
