@@ -1,6 +1,7 @@
 import os
 import sys
 import codec_mode
+import settings
 
 
 #
@@ -67,10 +68,10 @@ def uart_config(config_file="/boot/config.txt", cmdline_file="/boot/cmdline.txt"
             file.write(line)
 
 
-def startup_config():
-    os.system("sudo cp /home/pi/iqa_test/loop_wrap.service /lib/systemd/system/")
+def startup_config(service="loop_wrap.service"):
+    os.system("sudo cp /home/pi/iqa_test/{} /lib/systemd/system/".format(service))
     os.system("sudo systemctl daemon-reload")
-    os.system("sudo systemctl enable loop_wrap.service")
+    os.system("sudo systemctl enable {}".format(service))
 
 
 def hat_config(config_file="/boot/config.txt"):
@@ -103,6 +104,11 @@ def reboot():
             print("Invalid input, please enter either y or n.")
 
 
+def dut_settings(dut: str, settings_file='/pi/home/iqa_test/settings.txt'):
+    test_settings = settings.Settings(settings_file=settings_file)
+    test_settings.set_dut(dut)
+
+
 class Zero2:
     def __init__(self):
         print("Installing Zero 2")
@@ -119,13 +125,16 @@ class Pi4:
         if CodecZero is True:
             print("Installing Pi4 Codec Zero")
             codec_zero_config(mode_file="IQaudIO_Codec_Playback_Only.state")
+            dut_settings("codeczero")
         elif DigiAmp is False and DACPlus is False:
             print("Setup not completed, please call the class again specifying a DUT, e.g. Pi4(DACPlus=True).")
         else:
             if DACPlus is True:
                 print("Installing Pi4 DACPlus")
+                dut_settings("dacplus")
             elif DigiAmp is True:
                 print("Installing Pi4 DigiAmp")
+                dut_settings("digiamp")
         install()
         uart_config()
         reboot()
