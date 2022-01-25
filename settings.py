@@ -16,8 +16,8 @@ class Settings:
                 if setting in line and param_only is False:
                     return line
                 elif setting in line and param_only is True:
-                    line.split("=")
-                    return str(line[1])
+                    line_list = line.split("=")
+                    return str(line_list[1])
         return None
 
     def set_dut(self, dut: str):
