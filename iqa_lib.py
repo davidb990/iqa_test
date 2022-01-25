@@ -22,42 +22,42 @@ class Flags:
         GPIO.setup(self.DA_UV, GPIO.IN)
         GPIO.setup(self.CONN_CHK, GPIO.IN)
 
-    def DUT(self, poll_count=5) -> bool:
+    def dut(self, poll_count=5) -> bool:
         for n in range(poll_count):
             if GPIO.input(self.DUT3v3) == 0 and GPIO.input(self.DUT5v) == 0:
                 return True
             time.sleep(0.1)
         return False
 
-    def DA_OC(self, poll_count=5) -> bool:
+    def da_oc(self, poll_count=5) -> bool:
         for n in range(poll_count):
             if GPIO.input(self.DA_OC) == 0:
                 return True
             time.sleep(0.1)
         return False
 
-    def Z2(self, poll_count=5) -> bool:
+    def z2(self, poll_count=5) -> bool:
         for n in range(poll_count):
             if GPIO.input(self.Z2) == 0:
                 return True
             time.sleep(0.1)
         return False
 
-    def DA_OV(self, poll_count=5) -> bool:
+    def da_ov(self, poll_count=5) -> bool:
         for n in range(poll_count):
             if GPIO.input(self.DA_OV) == 1:
                 return True
             time.sleep(0.1)
         return False
 
-    def DA_UV(self, poll_count=5) -> bool:
+    def da_uv(self, poll_count=5) -> bool:
         for n in range(poll_count):
             if GPIO.input(self.DA_UV) == 1:
                 return True
             time.sleep(0.1)
         return False
 
-    def CONN_CHK(self, poll_count=5) -> bool:
+    def conn_chk(self, poll_count=5) -> bool:
         for n in range(poll_count):
             if GPIO.input(self.CONN_CHK) == 0:
                 return True
@@ -77,7 +77,7 @@ class Enable:
         GPIO.output(self.DA, GPIO.LOW)
         GPIO.output(self.Z2, GPIO.LOW)
 
-    def DUT(self, enable_bool: bool):
+    def dut(self, enable_bool: bool):
         if enable_bool:
             GPIO.output(self.DUT, GPIO.LOW)
         elif not enable_bool:
@@ -85,7 +85,7 @@ class Enable:
         else:
             raise Exception("Invalid argument for Enable.DUT(enable_bool)")
 
-    def DA(self, enable_bool: bool):
+    def da(self, enable_bool: bool):
         if enable_bool:
             GPIO.output(self.DA, GPIO.HIGH)
         elif not enable_bool:
@@ -93,7 +93,7 @@ class Enable:
         else:
             raise Exception("Invalid argument for Enable.DA(enable_bool)")
 
-    def Z2(self, enable_bool: bool):
+    def z2(self, enable_bool: bool):
         if enable_bool:
             GPIO.output(self.Z2, GPIO.LOW)
         elif not enable_bool:

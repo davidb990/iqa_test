@@ -104,7 +104,7 @@ def reboot():
             print("Invalid input, please enter either y or n.")
 
 
-def dut_settings(dut: str, settings_file='/pi/home/iqa_test/settings.txt'):
+def dut_settings(dut: str, settings_file='/home/pi/iqa_test/settings.txt'):
     test_settings = settings.Settings(settings_file=settings_file)
     test_settings.set_dut(dut)
 

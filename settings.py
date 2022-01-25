@@ -2,7 +2,7 @@ import os.path
 
 
 class Settings:
-    def __init__(self, settings_file='/pi/home/iqa_test/settings.txt'):
+    def __init__(self, settings_file='/home/pi/iqa_test/settings.txt'):
         self.settings_file = settings_file
         if os.path.exists(settings_file) is False:
             with open(self.settings_file, 'w') as file:

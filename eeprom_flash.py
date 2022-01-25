@@ -30,12 +30,12 @@ class Flash:
         if self.eeprom_exists() is False or overwrite is True:
             os.system("sudo {}eepflash.sh -w -f={}{} -t=24c32".format(self.eeprom_dir, self.eeprom_dir, self.eeprom_file))
             if self.dut_type == "digiamp":
-                self.enable.DA(False)
+                self.enable.da(False)
                 time.sleep(1)
-                self.enable.DA(True)
+                self.enable.da(True)
             else:
-                self.enable.DUT(False)
+                self.enable.dut(False)
                 time.sleep(1)
-                self.enable.DUT(True)
+                self.enable.dut(True)
         else:
             raise Exception("EEPROM already exists, use write_eeprom(overwrite=True) to overwrite.")

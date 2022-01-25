@@ -23,8 +23,8 @@ def dut_type():
 
 def setup(dut_type, z2_timeout=5):
     led.all_off()
-    enable.DA(False)
-    enable.DUT(False)
+    enable.da(False)
+    enable.dut(False)
     uart.test_tx()
     z2_on = False
     for n in range(z2_timeout):
@@ -35,9 +35,9 @@ def setup(dut_type, z2_timeout=5):
     if z2_on is not True:
         z2_reset = False
         print("Zero 2 not responding, restarting the Zero 2.")
-        enable.Z2(False)
+        enable.z2(False)
         time.sleep(2)
-        enable.Z2(True)
+        enable.z2(True)
         z2_en_time = time.perf_counter()
         z2_on_delay = 150
         while time.perf_counter() - z2_en_time < z2_on_delay:
@@ -60,23 +60,23 @@ def setup(dut_type, z2_timeout=5):
 
 def common_test(dut_type):
     led.testing()
-    if flags.CONN_CHK(poll_count=1):
+    if flags.conn_chk(poll_count=1):
         led.failed()
         return 3
     if "digiamp" in dut_type:
-        enable.DA(True)
-        if flags.DA_OC():
+        enable.da(True)
+        if flags.da_oc():
             led.failed()
             return 4
-        if flags.DA_UV():
+        if flags.da_uv():
             led.failed()
             return 5
-        if flags.DA_OV():
+        if flags.da_ov():
             led.failed()
             return 6
     else:
-        enable.DUT(True)
-        if flags.DUT():
+        enable.dut(True)
+        if flags.dut():
             led.failed()
             return 4
     flash = eeprom_flash.Flash()
@@ -175,9 +175,9 @@ def test_end(dut_type, error_code):
                 15: "Codec Zero MEMS mic failure"}
 
     if "digiamp" in dut_type:
-        enable.DA(False)
+        enable.da(False)
     else:
-        enable.DUT(False)
+        enable.dut(False)
     if error_code == 0:
         led.passed()
         print("\n\nDUT passed.\nMoving onto next device.\n\n")
