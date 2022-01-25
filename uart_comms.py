@@ -4,6 +4,7 @@ from tone import Tone
 import time
 import sys
 import relay_ctl
+import buzz
 
 
 class UART:
@@ -56,6 +57,7 @@ class UART:
 
     def fft_rx(self, rx, device=None, channels=2):
         self.rx_conf()
+        time.sleep(0.2)
         rx = rx.split(":")
         thresh = rx[1]
         fft = fft_lib.FFT(device=device, channels=channels)
@@ -153,6 +155,35 @@ class UART:
             sys.exit("Invalid choice of relay mode")
         self.write("RLAY:{}:{}\r".format(relay_msg, output))
 
+    def buzz_tx(self, duration: float):
+        self.write("DURA:{}:BUZZ?\r".format(str(duration)))
+
+    def buzz_rx(self, rx):
+        self.rx_conf()
+        rx = rx.split(":")
+        buzzer = buzz.Buzz()
+        buzzer.buzz(float(rx[1]))
+
+    def zero_on_tx(self):
+        self.write("ZERO:STAT:ON\r")
+
+    def zero_on_rx(self) -> bool:
+        rx = self.readall()
+        if "ZERO:STAT:ON" in rx:
+            return True
+        else:
+            return False
+
+    def test_tx(self):
+        self.write("TEST?\r")
+
+    def test_rx(self) -> bool:
+        rx = self.readall()
+        if "TEST" in rx:
+            return True
+        else:
+            return False
+
     def rx_check(self):
         rx = self.readall()
         if "FREQ?" in rx:
@@ -163,3 +194,5 @@ class UART:
             self.write("TEST\r")
         elif "RLAY" in rx:
             self.relay_rx(rx)
+        elif "BUZZ" in rx:
+            self.buzz_rx(rx)
