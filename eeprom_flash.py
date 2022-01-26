@@ -2,6 +2,7 @@ import settings
 import os
 import iqa_lib
 import time
+import audio_config
 
 
 class Flash:
@@ -13,18 +14,33 @@ class Flash:
             self.eeprom_dir = eeprom_dir
             if self.dut_type == "dacpro":
                 self.eeprom_file = "Pi-DACPRO.eep"
+                self.dt_overlay = "iqaudio-dacplus"
             elif self.dut_type == "dacplus":
                 self.eeprom_file = "Pi-DACPlus.eep"
+                self.dt_overlay = "iqaudio-dacplus"
             elif self.dut_type == "codeczero":
                 self.eeprom_file = "Pi-CodecZero.eep" # Note: This file doesn't exisit yet, update when it does
+                self.dt_overlay = "iqaudio-dacplus"
             elif self.dut_type == "digiamp":
                 self.eeprom_file = "Pi-DigiAMP.eep"
+                self.dt_overlay = "iqaudio-dacplus"
         else:
             raise Exception("DUT type has not been set in the settings.txt file.")
         self.enable = iqa_lib.Enable()
 
-    def eeprom_exists(self, hat_dir="/proc/device-tree/hats") -> bool:
-        return os.path.exists(hat_dir)
+    def eeprom_exists(self) -> bool:
+        try:
+            os.system("sudo dtoverlay-pre")
+            os.system("sudo dtoverlay {}".format(self.dt_overlay))
+            os.system("sudo dtoverlay-post")
+            audio = audio_config.AudioDevice()
+            iq_dict = audio.find_devices("iqaudio")
+            if len(iq_dict) == 0:
+                return False
+            else:
+                return True
+        except:
+            print("Error cheeking if EEPROM exists, setting eeprom_exists to False")
 
     def write_eeprom(self, overwrite=False):
         if self.eeprom_exists() is False or overwrite is True:
@@ -38,4 +54,9 @@ class Flash:
                 time.sleep(1)
                 self.enable.dut(True)
         else:
-            raise Exception("EEPROM already exists, use write_eeprom(overwrite=True) to overwrite.")
+            print("EEPROM already exists, use write_eeprom(overwrite=True) to overwrite.")
+        os.system("sudo dtoverlay-pre")
+        os.system("sudo dtoverlay {}".format(self.dt_overlay))
+        os.system("sudo dtoverlay-post")
+        time.sleep(0.5)
+

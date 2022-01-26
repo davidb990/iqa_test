@@ -5,6 +5,7 @@ import sys
 import settings as sett
 import eeprom_flash
 import tone as play_tone
+import os
 
 led = iqa_lib.LEDS()
 enable = iqa_lib.Enable()
@@ -51,9 +52,10 @@ def setup(dut_type, z2_timeout=5):
             sys.exit("Exitting: debugging required. Consider restarting the whole test system.")
 
     print("Device under test: {}".format(dut_type))
-    qr_code = input("\n\n\nPlace and lock the device under test (DUT) into the test jig, and lock in place."
-                    "\n\nOnce the DUT is locked in, scan the QR code on the DUT.")
     led.ready()
+    qr_code = input("\n\n\nPlace and lock the device under test (DUT) into the test jig, and lock in place."
+                    "\n\nOnce the DUT is locked in, scan the QR code on the DUT.\n")
+    os.system("sudo dtoverlay -R")
     print("QR Code: {}\nBeginning tests".format(qr_code))
     return qr_code
 
@@ -80,6 +82,7 @@ def common_test(dut_type):
             led.failed()
             return 4
     flash = eeprom_flash.Flash()
+
     try:
         flash.write_eeprom()
     except:
@@ -180,19 +183,19 @@ def test_end(dut_type, error_code):
         enable.dut(False)
     if error_code == 0:
         led.passed()
-        print("\n\nDUT passed.\nMoving onto next device.\n\n")
+        print("\n\nDUT passed.")
     else:
         led.failed()
-        print("\n\nDUT failed with error code {}: {}. "
-              "\nMoving on to next device\n\n".format(error_code, err_dict[error_code]))
+        print("\n\nDUT failed with error code {}: {}".format(error_code, err_dict[error_code]))
+    print("\nMoving onto next device.\n\n==========================================\n")
 
 
 while True:
-    dut_type = dut_type()
-    setup(dut_type)
-    error_code = common_test(dut_type)
+    dut = dut_type()
+    setup(dut)
+    error_code = common_test(dut)
     if error_code == 0:
-        error_code = audio_out_tests(dut_type)
-        if "codeczero" in dut_type and error_code == 0:
+        error_code = audio_out_tests(dut)
+        if "codeczero" in dut and error_code == 0:
             error_code = audio_in_tests()
-    test_end(dut_type, error_code)
+    test_end(dut, error_code)

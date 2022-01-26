@@ -136,6 +136,7 @@ class Pi4:
                 print("Installing Pi4 DigiAmp")
                 dut_settings("digiamp")
         install()
+        hat_config()
         uart_config()
         reboot()
 
