@@ -109,6 +109,11 @@ def dut_settings(dut: str, settings_file='/home/pi/iqa_test/settings.txt'):
     test_settings.set_dut(dut)
 
 
+def eeprom_exe(eepflash='/home/pi/iqa_test/eepflash.sh'):
+    os.system("sudo raspi-config nonint do_i2c 0")
+    os.system("chmod +x {}".format(eepflash))
+
+
 class Zero2:
     def __init__(self):
         print("Installing Zero 2")
@@ -138,6 +143,7 @@ class Pi4:
         install()
         hat_config()
         uart_config()
+        eeprom_exe()
         reboot()
 
 

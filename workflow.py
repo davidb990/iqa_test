@@ -12,7 +12,6 @@ enable = iqa_lib.Enable()
 uart = uart_comms.UART()
 flags = iqa_lib.Flags()
 settings = sett.Settings()
-tone = play_tone.Tone()
 
 
 def dut_type():
@@ -93,6 +92,7 @@ def common_test(dut_type):
 
 
 def fft(l_tone, r_tone, dur):
+    tone = play_tone.Tone()
     uart.fft_tx_w()
     conf_ts = time.perf_counter()
     confirmation = False
@@ -161,7 +161,6 @@ def audio_in_tests():
 
 
 def test_end(dut_type, error_code):
-
     err_dict = {0: "Passed",
                 3: "Connection check failed",
                 4: "DUT overcurrent",
