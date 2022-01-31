@@ -23,15 +23,18 @@ def dut_type():
 
 
 def uart_check(timeout=2):
-    uart.test_tx()
-    t_start = time.perf_counter()
     uart_response = False
+    t_start = time.perf_counter()
+    uart.test_tx()
     while time.perf_counter() - t_start < timeout:
         if uart.test_rx():
             uart_response = True
             break
-        time.sleep(0.1)
     return uart_response
+
+
+def relay_switch(relay, on_off):
+    uart.relay_tx(relay, on_off)
 
 
 def z2_reboot():
@@ -56,6 +59,7 @@ def setup(dut_type):
     led.all_off()
     enable.da(False)
     enable.dut(False)
+    relay_switch("all", "off")
     if uart_check() is False:
         print("Zero 2 not responding, restarting the Zero 2.")
         z2_reboot()
@@ -94,7 +98,9 @@ def common_test(dut_type):
         flash.write_eeprom()
     except:
         return 7
-    if flash.eeprom_exists() is False:
+    if flash.eep_exists is None:
+        flash.eeprom_exists()
+    elif flash.eep_exists is False:
         return 8
     return 0
 
@@ -109,51 +115,26 @@ def fft(l_tone, r_tone, dur, timeout=4, chunks=8):
             return fft
 
 
-def relay_switch(relay, on_off):
-    uart.relay_tx(relay, on_off)
-    conf_ts = time.perf_counter()
-    confirmation = False
-    while time.perf_counter() - conf_ts < 2:
-        if uart.conf_tx():
-            confirmation = True
-            break
-    if confirmation is False:
-        print("Zero 2 failed to confirm receipt of command.")
-        sys.exit()
-
-
 def audio_out_tests(dut_type, duration=0.5):
     if uart_check() is False:
         z2_reboot()
-    relay_switch("all", "off")
     relay_switch("aux_out", "on")
-    low_tone = fft(290, 310, duration)
-    if 285 < float(low_tone[0]) < 295 and 305 < float(low_tone[1]) < 315:
-        if bool(low_tone[2]) is False or bool(low_tone[3]) is False:
+    time.sleep(1)
+    lo_hi= fft(300, 13000, duration)
+    if 295 < float(lo_hi[0]) < 305 and 12995 < float(lo_hi[1]) < 13005:
+        if bool(lo_hi[2]) is False or bool(lo_hi[3]) is False:
             return 9
     else:
         return 9
-    high_tone = fft(12990, 13010, duration)
-    if 12985 < float(high_tone[0]) < 12995 and 13005 < float(high_tone[1]) < 13015:
-        if bool(high_tone[2]) is False or bool(high_tone[3]) is False:
-            return 10
-    else:
-        return 10
     if "digiamp" not in dut_type:
-        relay_switch("aux_out", "off")
         relay_switch("phones", "on")
-        low_tone = fft(290, 310, duration)
-        if 285 < float(low_tone[0]) < 295 and 305 < float(low_tone[1]) < 315:
-            if bool(low_tone[2]) is False or bool(low_tone[3]) is False:
-                return 11
+        time.sleep(1)
+        hi_lo = fft(13000, 300, duration)
+        if 12995 < float(hi_lo[0]) < 13005 and 295 < float(hi_lo[1]) < 305:
+            if bool(hi_lo[2]) is False or bool(hi_lo[3]) is False:
+                return 10
         else:
-            return 11
-        high_tone = fft(12990, 13010, duration)
-        if 12985 < float(high_tone[0]) < 12995 and 13005 < float(high_tone[1]) < 13015:
-            if bool(high_tone[2]) is False or bool(high_tone[3]) is False:
-                return 12
-        else:
-            return 12
+            return 10
     return 0
 
 
@@ -169,10 +150,8 @@ def test_end(dut_type, error_code):
                 6: "DigiAmp+ backpower overvolt",
                 7: "EEPROM write failure",
                 8: "Hat not detected on EEPROM restart",
-                9: "Balanced audio/aux out lowtone outside limits",
-                10: "Headphone jack/speaker out lowtone outside limits",
-                11: "Balanced audio/aux out hightone outside limits",
-                12: "Headphone jack/speaker out hightone outside limits",
+                9: "Balanced audio/aux out outside limits",
+                10: "Headphone jack/speaker out outside limits",
                 13: "Codec Zero external mic failure",
                 14: "Codec Zero stereo line in failure",
                 15: "Codec Zero MEMS mic failure"}

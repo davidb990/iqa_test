@@ -70,7 +70,7 @@ class UART:
         if isinstance(freq, tuple) and isinstance(noise_thresh, tuple):
             freq = str(freq[0]) + "," + str(freq[1])
             noise_thresh = str(noise_thresh[0]) + "," + str(noise_thresh[1])
-        #time.sleep(0.4)
+        # time.sleep(0.4)
         self.write("FREQ:{}:TRSH:{}\r".format(freq, noise_thresh))
 
     def fft_tx_w(self, thresh=0.25, chunk=None):
@@ -80,7 +80,10 @@ class UART:
             self.write("TRSH:{}:FREQ?\r".format(thresh))
 
     def fft_tx_r(self) -> tuple:
+
         tx_r = self.readall()
+        if tx_r == "b''":
+            raise Exception("Invalid FFT response")
         tx_r = tx_r.split(":")
         freq = tx_r[1]
         above_thresh = tx_r[3]
@@ -137,9 +140,14 @@ class UART:
             on_off = "off"
         else:
             sys.exit("Invalid relay state!")
-        relay_sel.relay(relay, on_off)
+        try:
+            exclusive = bool(rx[4])
+            relay_sel.relay(relay, on_off, exclusive=exclusive)
+        except:
+            print("Invalid/missing exclusive param, leaving as True.")
+            relay_sel.relay(relay, on_off)
 
-    def relay_tx(self, relay, on_off):
+    def relay_tx(self, relay, on_off, exclusive=True):
         if relay.lower() == "aux_out":
             relay_msg = "AUXO"
         elif relay.lower() == "rca":
@@ -160,7 +168,9 @@ class UART:
             output = on_off.upper()
         else:
             sys.exit("Invalid choice of relay mode")
-        self.write("RLAY:{}:{}\r".format(relay_msg, output))
+        if isinstance(exclusive, bool) is False:
+            sys.exit("Invalid choice of relay mode")
+        self.write("RLAY:{}:{}:EXCL:{}\r".format(relay_msg, output, exclusive))
 
     def buzz_tx(self, duration: float):
         self.write("DURA:{}:BUZZ?\r".format(str(duration)))

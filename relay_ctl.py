@@ -1,8 +1,8 @@
-#import RPi.GPIO as GPIO
+import RPi.GPIO as GPIO
 import sys
 
-#GPIO.setmode(GPIO.BCM)
-#GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BCM)
+GPIO.setwarnings(False)
 
 
 class Relay:
@@ -18,9 +18,15 @@ class Relay:
             GPIO.setup(n, GPIO.OUT)
             GPIO.output(n, GPIO.LOW)
 
-    def relay(self, relay: str, on_off: str):
+    def relay(self, relay: str, on_off: str, exclusive=True):
         relay_list = ["aux_out", "rca", "phones", "xlr", "aux_in",
                       "mic"]  # note: relays must have the same index as in self.all
+        if exclusive is True and on_off.lower() == "on":
+            for n in self.all:
+                GPIO.output(n, GPIO.LOW)
+        elif exclusive is True and on_off.lower() == "off":
+            for n in self.all:
+                GPIO.output(n, GPIO.HIGH)
         if relay.lower() in relay_list and on_off.lower() == "on":
             index = relay_list.index(relay)
             GPIO.output(self.all[index], GPIO.HIGH)
