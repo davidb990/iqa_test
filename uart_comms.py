@@ -56,23 +56,30 @@ class UART:
             return False
 
     def fft_rx(self, rx, device=None, channels=2):
-        self.rx_conf()
-        time.sleep(0.2)
+        # self.rx_conf()
+        # time.sleep(0.2)
         rx = rx.split(":")
         thresh = rx[1]
-        fft = fft_lib.FFT(device=device, channels=channels)
+        if "CHUN" in rx[2]:
+            chunks = int(rx[3])
+            fft = fft_lib.FFT(device=device, channels=channels, chunk_num=chunks)
+        else:
+            fft = fft_lib.FFT(device=device, channels=channels)
         freq = fft.det_freq()
         noise_thresh = fft.above_bgnd_thresh(float(thresh))
         if isinstance(freq, tuple) and isinstance(noise_thresh, tuple):
             freq = str(freq[0]) + "," + str(freq[1])
             noise_thresh = str(noise_thresh[0]) + "," + str(noise_thresh[1])
-        time.sleep(0.4)
+        #time.sleep(0.4)
         self.write("FREQ:{}:TRSH:{}\r".format(freq, noise_thresh))
 
-    def fft_tx_w(self, thresh=0.25):
-        self.write("TRSH:{}:FREQ?\r".format(thresh))
+    def fft_tx_w(self, thresh=0.25, chunk=None):
+        if chunk is not None:
+            self.write("TRSH:{}:CHUN:{}:FREQ?\r".format(thresh, chunk))
+        else:
+            self.write("TRSH:{}:FREQ?\r".format(thresh))
 
-    def fft_tx_r(self):
+    def fft_tx_r(self) -> tuple:
         tx_r = self.readall()
         tx_r = tx_r.split(":")
         freq = tx_r[1]
@@ -80,12 +87,12 @@ class UART:
         freq_list = freq.split(",")
         thresh_list = above_thresh.split(",")
         if len(freq_list) == 2 and len(thresh_list) == 2:
-            return freq_list[0], freq_list[1], thresh_list[0], thresh_list[1]
+            return freq_list[0], freq_list[1], bool(thresh_list[0]), bool(thresh_list[1])
         else:
-            return freq, above_thresh
+            return freq, bool(above_thresh)
 
     def tone_rx(self, rx):
-        self.rx_conf()
+        # self.rx_conf()
         tone = Tone()
         rx = rx.split(":")
         freq = rx[1]
@@ -105,7 +112,7 @@ class UART:
         self.write("FREQ:{}:DURA:{}:TONE?\r".format(freq, duration))
 
     def relay_rx(self, rx):
-        self.rx_conf()
+        # self.rx_conf()
         relay_sel = relay_ctl.Relay()
         rx = rx.split(":")
         if rx[1] == "AUXO":
@@ -159,7 +166,7 @@ class UART:
         self.write("DURA:{}:BUZZ?\r".format(str(duration)))
 
     def buzz_rx(self, rx):
-        self.rx_conf()
+        # self.rx_conf()
         rx = rx.split(":")
         buzzer = buzz.Buzz()
         buzzer.buzz(float(rx[1]))

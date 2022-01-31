@@ -9,6 +9,7 @@ class Flash:
     def __init__(self, eeprom_dir = "/home/pi/iqa_test/"):
         dut_settings = settings.Settings()
         dut_type = dut_settings.read_setting("dut=", param_only=True)
+        self.eep_exists = None
         if dut_type is not None:
             self.dut_type = dut_type.lower()
             self.eeprom_dir = eeprom_dir
@@ -33,20 +34,22 @@ class Flash:
             raise Exception("DUT type has not been set in the settings.txt file.")
 
 
-    def eeprom_exists(self) -> bool:
+    def eeprom_exists(self):
         try:
-            os.system("sudo {}eepflash.sh -r -f={}dump.eep -t=24c32".format(self.eeprom_dir, self.eeprom_dir))
+            os.system("sudo {}eepflash.sh -r -f={}dump.eep -t=24c32 -y".format(self.eeprom_dir, self.eeprom_dir))
             if os.path.getsize("{}dump.eep".format(self.eeprom_dir)) > 500:
-                return True
+                self.eep_exists = True
             else:
-                return False
+                self.eep_exists = False
         except:
             print("Error cheeking if EEPROM exists, setting eeprom_exists to False")
-            return False
+            self.eep_exists = False
 
     def write_eeprom(self, overwrite=False):
-        if self.eeprom_exists() is False or overwrite is True:
-            os.system("sudo {}eepflash.sh -w -f={}{} -t=24c32".format(self.eeprom_dir, self.eeprom_dir, self.eeprom_file))
+        if self.eep_exists is None:
+            self.eeprom_exists()
+        if self.eep_exists is False or overwrite is True:
+            os.system("sudo {}eepflash.sh -w -f={}{} -t=24c32 -y".format(self.eeprom_dir, self.eeprom_dir, self.eeprom_file))
             if "digiamp" in self.dut_type:
                 self.enable.da(False)
                 time.sleep(1)

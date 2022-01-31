@@ -1,8 +1,8 @@
-import RPi.GPIO as GPIO
+#import RPi.GPIO as GPIO
 import sys
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setwarnings(False)
+#GPIO.setmode(GPIO.BCM)
+#GPIO.setwarnings(False)
 
 
 class Relay:

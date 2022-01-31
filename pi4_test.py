@@ -12,15 +12,17 @@ while True:
         print("Invalid Input! Please enter either 1,2 or 3.")
         continue
     if command == 1:
+        start = time.perf_counter()
         uart.fft_tx_w(0.5)
         for n in range(max_attempts):
-            confirmation = uart.conf_tx()
+            confirmation = True
             if confirmation:
                 while True:
                     try:
                         fft = uart.fft_tx_r()
                         if isinstance(fft, tuple):
                             print(fft)
+                            print(time.perf_counter()-start)
                             break
                     except:
                         pass

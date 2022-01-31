@@ -203,49 +203,57 @@ class UART:
     def process_loop(self):
         instruct_buff = []
         res_buff = []
+        instruct_exed = False
+        res_sent = False
         loop_active = False
         pending_instruct = True
-        with concurrent.futures.ThreadPoolExecutor as exe:
+        with concurrent.futures.ThreadPoolExecutor() as exe:
             while pending_instruct:
                 uart_rx = exe.submit(self.rx_check)
                 if len(res_buff) != 0:
                     self.write(res_buff[0])
-                    res_buff = res_buff.pop(0)
+                    res_sent = True
+                if instruct_exed is True:
+                    instruct_buff.pop(0)
+                    instruct_exed = False
+                if res_sent is True:
+                    res_buff.pop(0)
+                    res_sent = False
                 if len(instruct_buff) != 0:
                     if "FREQ?" in instruct_buff[0]:
-                        action = exe.submit(self.fft_rx, args=instruct_buff[0])
+                        action = exe.submit(self.fft_rx, instruct_buff[0])
                         res_buff = res_buff.append(action.result())
-                        instruct_buff = instruct_buff.pop(0)
+                        instruct_exed = True
                         loop_active = True
                         if len(instruct_buff) == 0:
                             pending_instruct = False
                     elif "TONE?" in instruct_buff[0]:
-                        action = exe.submit(self.tone_rx, args=instruct_buff[0])
-                        instruct_buff = instruct_buff.pop(0)
+                        action = exe.submit(self.tone_rx, instruct_buff[0])
+                        instruct_exed = True
                         loop_active = True
                         if len(instruct_buff) == 0:
                             pending_instruct = False
                     elif "TEST?" in instruct_buff[0]:
                         res_buff = res_buff.append("TEST\r")
-                        instruct_buff = instruct_buff.pop(0)
+                        instruct_exed = True
                         loop_active = True
                         if len(instruct_buff) == 0:
                             pending_instruct = False
                     elif "RLAY" in instruct_buff[0]:
-                        action = exe.submit(self.relay_rx, args=instruct_buff[0])
-                        instruct_buff = instruct_buff.pop(0)
+                        action = exe.submit(self.relay_rx, instruct_buff[0])
+                        instruct_exed = True
                         loop_active = True
                         if len(instruct_buff) == 0:
                             pending_instruct = False
                     elif "BUZZ" in instruct_buff[0]:
-                        action = exe.submit(self.buzz_rx, args=instruct_buff[0])
-                        instruct_buff = instruct_buff.pop(0)
+                        action = exe.submit(self.buzz_rx, instruct_buff[0])
+                        instruct_exed = True
                         loop_active = True
                         if len(instruct_buff) == 0:
                             pending_instruct = False
                 rx = uart_rx.result()
                 if rx is not None:
-                    instruct_buff = instruct_buff.append(rx)
+                    instruct_buff.append(rx)
                 if loop_active is True and pending_instruct is False:
                     break
 

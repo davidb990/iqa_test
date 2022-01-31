@@ -12,6 +12,7 @@ enable = iqa_lib.Enable()
 uart = uart_comms.UART()
 flags = iqa_lib.Flags()
 settings = sett.Settings()
+tone = play_tone.Tone()
 
 
 def dut_type():
@@ -21,35 +22,43 @@ def dut_type():
     return dut_type
 
 
-def setup(dut_type, z2_timeout=5):
+def uart_check(timeout=2):
+    uart.test_tx()
+    t_start = time.perf_counter()
+    uart_response = False
+    while time.perf_counter() - t_start < timeout:
+        if uart.test_rx():
+            uart_response = True
+            break
+        time.sleep(0.1)
+    return uart_response
+
+
+def z2_reboot():
+    z2_reset = False
+    enable.z2(False)
+    time.sleep(2)
+    enable.z2(True)
+    z2_en_time = time.perf_counter()
+    z2_on_delay = 150
+    while time.perf_counter() - z2_en_time < z2_on_delay:
+        if uart.zero_on_rx() is True:
+            print("Zero 2 is ready for testing.")
+            z2_reset = True
+            break
+        time.sleep(0.05)
+    if z2_reset is False:
+        print("Zero 2 has failed to reset within {} seconds".format(z2_on_delay))
+        sys.exit("Exitting: debugging required. Consider restarting the whole test system.")
+
+
+def setup(dut_type):
     led.all_off()
     enable.da(False)
     enable.dut(False)
-    uart.test_tx()
-    z2_on = False
-    for n in range(z2_timeout):
-        if uart.test_rx() is True:
-            z2_on = True
-            break
-        time.sleep(0.1)
-    if z2_on is not True:
-        z2_reset = False
+    if uart_check() is False:
         print("Zero 2 not responding, restarting the Zero 2.")
-        enable.z2(False)
-        time.sleep(2)
-        enable.z2(True)
-        z2_en_time = time.perf_counter()
-        z2_on_delay = 150
-        while time.perf_counter() - z2_en_time < z2_on_delay:
-            if uart.zero_on_rx() is True:
-                print("Zero 2 is ready for testing.")
-                z2_reset = True
-                break
-            time.sleep(0.05)
-        if z2_reset is False:
-            print("Zero 2 has failed to reset within {} seconds".format(z2_on_delay))
-            sys.exit("Exitting: debugging required. Consider restarting the whole test system.")
-
+        z2_reboot()
     print("Device under test: {}".format(dut_type))
     led.ready()
     qr_code = input("\n\n\nPlace and lock the device under test (DUT) into the test jig, and lock in place."
@@ -81,7 +90,6 @@ def common_test(dut_type):
             led.failed()
             return 4
     flash = eeprom_flash.Flash()
-
     try:
         flash.write_eeprom()
     except:
@@ -91,23 +99,14 @@ def common_test(dut_type):
     return 0
 
 
-def fft(l_tone, r_tone, dur):
-    tone = play_tone.Tone()
-    uart.fft_tx_w()
-    conf_ts = time.perf_counter()
-    confirmation = False
-    while time.perf_counter() - conf_ts < 2:
-        if uart.conf_tx():
-            tone.stereotone(l_tone, r_tone, dur)
-            confirmation = True
-            timestamp = time.perf_counter()
-            while time.perf_counter() - timestamp < 4:
-                fft = uart.fft_tx_r()
-                if isinstance(fft, tuple):
-                    return fft
-    if confirmation is False:
-        print("Zero 2 failed to confirm receipt of command.")
-        sys.exit()
+def fft(l_tone, r_tone, dur, timeout=4, chunks=8):
+    uart.fft_tx_w(chunk=chunks)
+    tone.stereotone(l_tone, r_tone, dur)
+    timestamp = time.perf_counter()
+    while time.perf_counter() - timestamp < timeout:
+        fft = uart.fft_tx_r()
+        if isinstance(fft, tuple):
+            return fft
 
 
 def relay_switch(relay, on_off):
@@ -123,16 +122,18 @@ def relay_switch(relay, on_off):
         sys.exit()
 
 
-def audio_out_tests(dut_type):
+def audio_out_tests(dut_type, duration=0.5):
+    if uart_check() is False:
+        z2_reboot()
     relay_switch("all", "off")
     relay_switch("aux_out", "on")
-    low_tone = fft(290, 310, 1)
+    low_tone = fft(290, 310, duration)
     if 285 < float(low_tone[0]) < 295 and 305 < float(low_tone[1]) < 315:
         if bool(low_tone[2]) is False or bool(low_tone[3]) is False:
             return 9
     else:
         return 9
-    high_tone = fft(12990, 13010, 1)
+    high_tone = fft(12990, 13010, duration)
     if 12985 < float(high_tone[0]) < 12995 and 13005 < float(high_tone[1]) < 13015:
         if bool(high_tone[2]) is False or bool(high_tone[3]) is False:
             return 10
@@ -141,13 +142,13 @@ def audio_out_tests(dut_type):
     if "digiamp" not in dut_type:
         relay_switch("aux_out", "off")
         relay_switch("phones", "on")
-        low_tone = fft(290, 310, 1)
+        low_tone = fft(290, 310, duration)
         if 285 < float(low_tone[0]) < 295 and 305 < float(low_tone[1]) < 315:
             if bool(low_tone[2]) is False or bool(low_tone[3]) is False:
                 return 11
         else:
             return 11
-        high_tone = fft(12990, 13010, 1)
+        high_tone = fft(12990, 13010, duration)
         if 12985 < float(high_tone[0]) < 12995 and 13005 < float(high_tone[1]) < 13015:
             if bool(high_tone[2]) is False or bool(high_tone[3]) is False:
                 return 12

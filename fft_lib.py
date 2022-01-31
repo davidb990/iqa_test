@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 class FFT:
     def __init__(self, device=None, data_format=pyaudio.paInt16, channels=1, rate=44100,
-                 chunk_num=20, chunk_length=1024):
+                 chunk_num=8, chunk_length=1024):
         self.channels = channels
         self.rate = rate
         chunk = chunk_num * chunk_length
