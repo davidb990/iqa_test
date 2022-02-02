@@ -1,10 +1,13 @@
+# This file manages the settings for the IQ Audio Test
+
+
 import os.path
 
 
 class Settings:
     def __init__(self, settings_file='/home/pi/iqa_test/settings.txt'):
         self.settings_file = settings_file
-        if os.path.exists(settings_file) is False:
+        if os.path.exists(settings_file) is False:  # This if statement creates a settings file if none exists
             with open(self.settings_file, 'w') as file:
                 pass
 

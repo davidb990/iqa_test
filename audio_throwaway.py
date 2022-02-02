@@ -1,3 +1,6 @@
+# This script is just used for testing the libraries.
+
+
 from fft_lib import FFT
 from tone import Tone
 

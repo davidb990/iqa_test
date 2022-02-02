@@ -1,3 +1,6 @@
+# This library controls the Flags, Enables and QR code reader for the tests.
+
+
 import RPi.GPIO as GPIO
 import time
 

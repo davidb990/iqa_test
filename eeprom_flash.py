@@ -1,3 +1,8 @@
+# This script manages the eeprom parts of the test. It needs eepflash.sh to work, furthermore eepflash.sh must be made
+# executable. The eepflash.sh on the IQ Audio git is out of date and will not work,
+# use https://github.com/raspberrypi/hats/blob/master/eepromutils/eepflash.sh instead.
+
+
 import settings
 import os
 import iqa_lib
@@ -13,7 +18,7 @@ class Flash:
         if dut_type is not None:
             self.dut_type = dut_type.lower()
             self.eeprom_dir = eeprom_dir
-            self.enable = iqa_lib.Enable()
+            self.enable = iqa_lib.Enable()  # Can't write to the DUT if it's turned off
             if "dacpro" in self.dut_type:
                 self.eeprom_file = "Pi-DACPRO.eep"
                 self.dt_overlay = "iqaudio-dacplus"
@@ -23,12 +28,14 @@ class Flash:
                 self.dt_overlay = "iqaudio-dacplus"
                 self.enable.dut(True)
             elif "codeczero" in self.dut_type:
-                self.eeprom_file = "Pi-CodecZero.eep" # Note: This file doesn't exisit yet, update when it does
-                self.dt_overlay = "iqaudio-dacplus"
+                self.eeprom_file = "Pi-CodecZero.eep" # Note: This file doesn't exist yet, update when it does - Edit 020222: file exists, check email
+                # If you're not me and I forgot to put the .eep somewhere useful, use eeprom_exists() to copy the eeprom from an already programmed Codec Zero
+                # Note that the file name should be changed from dump.eep to something more useful, like Pi-CodecZero.eep
+                self.dt_overlay = "iqaudio-codec"
                 self.enable.dut(True)
             elif "digiamp" in self.dut_type:
                 self.eeprom_file = "Pi-DigiAMP.eep"
-                self.dt_overlay = "iqaudio-dacplus"
+                self.dt_overlay = "iqaudio-dacplus unmute-amp=1"
                 self.enable.da(True)
         else:
             raise Exception("DUT type has not been set in the settings.txt file.")
@@ -36,8 +43,10 @@ class Flash:
 
     def eeprom_exists(self):
         try:
-            os.system("sudo {}eepflash.sh -r -f={}dump.eep -t=24c32 -y".format(self.eeprom_dir, self.eeprom_dir))
-            if os.path.getsize("{}dump.eep".format(self.eeprom_dir)) > 500:
+            # this won't work if eepflash hasn't been made executable - make sure install.py is run first, or use "sudo bash eepflash.sh ....."
+            os.system("sudo {}eepflash.sh -r -f={}dump.eep -t=24c32 -y".format(self.eeprom_dir, self.eeprom_dir))  # copies the eeprom from the DUT to dump.eep
+            # if needed, use 'hexdump dump.eep' in the terminal to inspect
+            if os.path.getsize("{}dump.eep".format(self.eeprom_dir)) > 500:  # Checks that the eeprom on the DUT has more than 500 bytes (not empty)
                 self.eep_exists = True
             else:
                 self.eep_exists = False
@@ -49,7 +58,8 @@ class Flash:
         if self.eep_exists is None:
             self.eeprom_exists()
         if self.eep_exists is False or overwrite is True:
-            os.system("sudo {}eepflash.sh -w -f={}{} -t=24c32 -y".format(self.eeprom_dir, self.eeprom_dir, self.eeprom_file))
+            os.system("sudo {}eepflash.sh -w -f={}{} -t=24c32 -y".format(self.eeprom_dir, self.eeprom_dir, self.eeprom_file))  # Writes the eeprom to the DUT
+            # Reboot the DUT
             if "digiamp" in self.dut_type:
                 self.enable.da(False)
                 time.sleep(1)
@@ -60,6 +70,8 @@ class Flash:
                 self.enable.dut(True)
         else:
             print("EEPROM already exists, use write_eeprom(overwrite=True) to overwrite.")
+        # The next section 'manually' enables the dtoverlay for the IQ Audio board, as for it to detect
+        # automatically the Pi must be restarted (not ideal)
         os.system("sudo dtoverlay -R")
         os.system("sudo dtoverlay-pre")
         os.system("sudo dtoverlay {}".format(self.dt_overlay))

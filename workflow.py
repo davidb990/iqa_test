@@ -1,3 +1,6 @@
+# This is the highest level script on the Pi4, which brings all the test elements together into one workflow.
+
+
 import iqa_lib
 import uart_comms
 import time
@@ -6,6 +9,10 @@ import settings as sett
 import eeprom_flash
 import tone as play_tone
 import os
+import codec_mode
+import fft_lib
+
+print("\n==========================================\nInitialising Test\n==========================================\n")
 
 led = iqa_lib.LEDS()
 enable = iqa_lib.Enable()
@@ -13,6 +20,8 @@ uart = uart_comms.UART()
 flags = iqa_lib.Flags()
 settings = sett.Settings()
 tone = play_tone.Tone()
+
+print("\n==========================================\nInitialisation Complete\n==========================================\n")
 
 
 def dut_type():
@@ -23,6 +32,7 @@ def dut_type():
 
 
 def uart_check(timeout=2):
+    # Checks for a response over UART from the Zero 2
     uart_response = False
     t_start = time.perf_counter()
     uart.test_tx()
@@ -73,6 +83,7 @@ def setup(dut_type):
 
 
 def common_test(dut_type):
+    # These tests are common accross all types - current testing & eeprom reading/writing
     led.testing()
     if flags.conn_chk(poll_count=1):
         led.failed()
@@ -105,7 +116,8 @@ def common_test(dut_type):
     return 0
 
 
-def fft(l_tone, r_tone, dur, timeout=4, chunks=8):
+def fft_req(l_tone, r_tone, dur, timeout=4, chunks=8):
+    # Requests an FFT from the Zero 2 and plays a tone out of the DUT
     uart.fft_tx_w(chunk=chunks)
     tone.stereotone(l_tone, r_tone, dur)
     timestamp = time.perf_counter()
@@ -115,30 +127,59 @@ def fft(l_tone, r_tone, dur, timeout=4, chunks=8):
             return fft
 
 
-def audio_out_tests(dut_type, duration=0.5):
+def audio_out_tests(dut_type, duration=2.5):
+    # Output tests for all DUTs
+    if "codeczero" in dut_type:
+        codec_mode.CodecMode(mode_file='IQaudIO_Codec_OnboardMIC_record_and_SPK_playback.state')
     if uart_check() is False:
         z2_reboot()
     relay_switch("aux_out", "on")
     time.sleep(1)
-    lo_hi= fft(300, 13000, duration)
+    lo_hi = fft_req(300, 13000, duration)
     if 295 < float(lo_hi[0]) < 305 and 12995 < float(lo_hi[1]) < 13005:
         if bool(lo_hi[2]) is False or bool(lo_hi[3]) is False:
+            return 9
+    elif "codeczero" in dut_type and 295 < float(lo_hi[0]) < 305:
+        if bool(lo_hi[2]) is False:
             return 9
     else:
         return 9
     if "digiamp" not in dut_type:
         relay_switch("phones", "on")
         time.sleep(1)
-        hi_lo = fft(13000, 300, duration)
+        hi_lo = fft_req(13000, 300, duration)
         if 12995 < float(hi_lo[0]) < 13005 and 295 < float(hi_lo[1]) < 305:
             if bool(hi_lo[2]) is False or bool(hi_lo[3]) is False:
+                return 10
+        elif "codeczero" in dut_type and 12995 < float(hi_lo[0]) < 13005:
+            if bool(hi_lo[2]) is False:
                 return 10
         else:
             return 10
     return 0
 
 
-def audio_in_tests():
+def audio_in_tests(duration=2.5):
+    # Input tests for the Codec Zero
+    buzz_fft = fft_lib.FFT(channels=1)
+    mic_fft = fft_lib.FFT(channels=2)
+    uart.buzz_tx(duration)
+    time.sleep(1)
+    loud_noise = buzz_fft.above_bgnd_thresh(thresh=0.2)
+    if loud_noise is False:
+        return 15
+    codec_mode.CodecMode(mode_file="IQaudIO_Codec_StereoMIC_record_and_HP_playback.state")  # loading the correct ALSA file
+    relay_switch("mic", "on")
+    time.sleep(1)
+    uart.tone_tx([13000, 300], duration)
+    time.sleep(1)
+    fft_reading = mic_fft.fft()
+    bgnd_check = mic_fft.above_bgnd_thresh()
+    if 12995 < float(fft_reading[0]) < 13005 and 295 < float(fft_reading[1]) < 305:
+        if bool(bgnd_check[0]) is False or bool(bgnd_check[1]) is False:
+            return 13
+    else:
+        return 13
     return 0
 
 
@@ -153,7 +194,6 @@ def test_end(dut_type, error_code):
                 9: "Balanced audio/aux out outside limits",
                 10: "Headphone jack/speaker out outside limits",
                 13: "Codec Zero external mic failure",
-                14: "Codec Zero stereo line in failure",
                 15: "Codec Zero MEMS mic failure"}
 
     if "digiamp" in dut_type:

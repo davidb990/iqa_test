@@ -1,3 +1,7 @@
+# This library can be used to generate a tone in mono or in stereo.
+# It uses pyaudio to output the tone, and numpy to generate the sine wave.
+
+
 import numpy as np
 import pyaudio
 import time

@@ -1,3 +1,6 @@
+# This is a test/demo script to check the UART can call functions on the Zero 2 correctly.
+
+
 import uart_comms as uart
 import time
 

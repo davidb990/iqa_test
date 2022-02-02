@@ -1,3 +1,7 @@
+# This script can be used as a library to do FFTs on an audio input.
+# It uses pyaudio to capture the audio and numpy to process it.
+
+
 import numpy as np
 import pyaudio
 import matplotlib.pyplot as plt
@@ -45,11 +49,12 @@ class FFT:
 
     def fft(self):
         self.data = np.frombuffer(self.stream.read(self.chunk), dtype=np.int16)
-        self.stream.close()
+        # self.stream.close()
         self.freq = self.rate * np.arange(self.chunk) / self.chunk
         scoped_freq = self.freq_range(self.freq, lower_lim=20, upper_lim=16000)
-        l = np.arange(1, np.floor(self.chunk / 2), dtype='int')
+        l = np.arange(1, np.floor(self.chunk / 2), dtype='int')  # as FFT outputs are symmetrical, we only need half of it
         if self.stereo is True:
+            # If stereo data is recorded, it's interleaved between channels; i.e. the data will be of the form L,R,L,R,...,L,R
             l_data = self.data[0::2]
             r_data = self.data[1::2]
             l_fhat = np.fft.fft(l_data, self.chunk)
@@ -69,6 +74,7 @@ class FFT:
         self.freq = self.freq[l]
 
     def det_freq(self):
+        # This function looks for and returns the most powerful frequency captured in the sample
         if self.freq is None:
             self.fft()
         if self.stereo is True:
@@ -77,6 +83,7 @@ class FFT:
             return self.freq[np.argmax(self.mono_psd)]
 
     def above_bgnd_thresh(self, thresh=0.25):
+        # This function checks to see if the most powerful frequency is significantly above the other frequencies
         if self.freq is None:
             self.fft()
         peak_thresh = 1 - float(thresh)
@@ -97,6 +104,7 @@ class FFT:
                 return True
 
     def plotter(self, title: str, scale='linear', x0=None, y0=None, x1=None, y1=None, double_plot=False):
+        # Does the leg work for plotting the FFT
         if not double_plot:
             fig, ax = plt.subplots()
             ax.plot(x0, y0)
@@ -114,6 +122,7 @@ class FFT:
         plt.show()
 
     def fft_plot(self):
+        # Plots the FFT by calling the plotter function
         if self.freq is None:
             self.fft()
         if self.stereo:
