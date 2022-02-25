@@ -22,7 +22,7 @@ def install():
 
     try:
         os.system("sudo apt-get install -y python-pyaudio")
-        os.system("sudo apt-get install -y  python3-pyaudio")
+        os.system("sudo apt-get install -y python3-pyaudio")
     except:
         sys.exit("\n\nUnable to install pyaudio and/or dependancies\n\n")
 
@@ -38,6 +38,10 @@ def install():
         os.system("sudo pip3 install pyserial")
     except:
         sys.exit("\n\nUnable to install pyserial\n\n")
+    try:
+        os.system("sudo pip3 install smbus2")
+    except:
+        sys.exit("\n\nUnable to install smbus2\n\n")
     try:
         os.system("sudo apt full-upgrade -y")
     except:
