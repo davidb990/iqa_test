@@ -73,6 +73,15 @@ class FFT:
         self.scoped_freq = scoped_freq[l]
         self.freq = self.freq[l]
 
+    def mean_amp_chk(self, amp_thresh: float) -> bool:
+        if self.data is None:
+            self.fft()
+        abs_mean = np.mean(np.abs(self.data))
+        if abs_mean > amp_thresh:
+            return True
+        else:
+            return False
+
     def det_freq(self):
         # This function looks for and returns the most powerful frequency captured in the sample
         if self.freq is None:

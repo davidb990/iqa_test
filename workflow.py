@@ -11,6 +11,7 @@ import tone as play_tone
 import os
 import codec_mode
 import fft_lib
+import results_lib
 
 print("\n==========================================\nInitialising Test\n==========================================\n")
 
@@ -101,6 +102,8 @@ def common_test(dut_type):
             return 6
     else:
         enable.dut(True)
+        if "codeczero" in dut_type:
+            os.system("sudo dtoverlay iqaudio-codec")
         if flags.dut():
             led.failed()
             return 4
@@ -122,15 +125,19 @@ def fft_req(l_tone, r_tone, dur, timeout=4, chunks=8):
     tone.stereotone(l_tone, r_tone, dur)
     timestamp = time.perf_counter()
     while time.perf_counter() - timestamp < timeout:
-        fft = uart.fft_tx_r()
-        if isinstance(fft, tuple):
-            return fft
+        try:
+            fft = uart.fft_tx_r()
+            if isinstance(fft, tuple):
+                return fft
+        except:
+            pass
+    print("Test Error: Results from FFT not returned")
 
 
 def audio_out_tests(dut_type, duration=2.5):
     # Output tests for all DUTs
     if "codeczero" in dut_type:
-        codec_mode.CodecMode(mode_file='IQaudIO_Codec_OnboardMIC_record_and_SPK_playback.state')
+        codec_mode.CodecMode(mode_file='IQaudIO_Codec_Playback_Only.state')
     if uart_check() is False:
         z2_reboot()
     relay_switch("aux_out", "on")
@@ -161,6 +168,7 @@ def audio_out_tests(dut_type, duration=2.5):
 
 def audio_in_tests(duration=2.5):
     # Input tests for the Codec Zero
+    codec_mode.CodecMode(mode_file="IQaudIO_Codec_OnboardMIC_record_and_SPK_playback.state")   # loading the correct ALSA file
     buzz_fft = fft_lib.FFT(channels=1)
     mic_fft = fft_lib.FFT(channels=2)
     uart.buzz_tx(duration)
@@ -183,7 +191,7 @@ def audio_in_tests(duration=2.5):
     return 0
 
 
-def test_end(dut_type, error_code):
+def test_end(dut_type, error_code, qr_code, test_duration):
     err_dict = {0: "Passed",
                 3: "Connection check failed",
                 4: "DUT overcurrent",
@@ -206,15 +214,19 @@ def test_end(dut_type, error_code):
     else:
         led.failed()
         print("\n\nDUT failed with error code {}: {}".format(error_code, err_dict[error_code]))
+    save = results_lib.Save(qr_code, dut_type, error_code, test_duration)
+    save.to_file()
     print("\nMoving onto next device.\n\n==========================================\n")
 
 
 while True:
     dut = dut_type()
-    setup(dut)
+    qr_code = setup(dut)
+    t_start = time.perf_counter()
     error_code = common_test(dut)
     if error_code == 0:
         error_code = audio_out_tests(dut)
         if "codeczero" in dut and error_code == 0:
             error_code = audio_in_tests()
-    test_end(dut, error_code)
+    t_end = time.perf_counter()
+    test_end(dut, error_code, qr_code, t_end-t_start)

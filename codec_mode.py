@@ -14,10 +14,14 @@ class CodecMode:
                  "IQaudIO_Codec_StereoMIC_record_and_HP_playback.state"]
 
     def set_mode(self, mode_file: str):
+        #os.system("sudo dtoverlay -R")
+        #os.system("sudo dtoverlay-pre")
+        #os.system("sudo dtoverlay iqaudio-codec")
+        #os.system("sudo dtoverlay-post")
         try:
-            os.system("git clone https://github.com/iqaudio/Pi-Codec.git")
             os.system("sudo alsactl restore -f Pi-Codec/" + str(mode_file))
         except:
+            os.system("git clone https://github.com/iqaudio/Pi-Codec.git")
             os.system("sudo alsactl restore -f Pi-Codec/" + str(mode_file))
 
     def __init__(self, aux_in=False, aux_out=False, playback=False,

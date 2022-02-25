@@ -8,10 +8,12 @@ import os
 import iqa_lib
 import time
 import audio_config
+import eepflash
 
 
 class Flash:
     def __init__(self, eeprom_dir = "/home/pi/iqa_test/"):
+        self.eep = eepflash.EepFlash()
         dut_settings = settings.Settings()
         dut_type = dut_settings.read_setting("dut=", param_only=True)
         self.eep_exists = None
@@ -28,9 +30,10 @@ class Flash:
                 self.dt_overlay = "iqaudio-dacplus"
                 self.enable.dut(True)
             elif "codeczero" in self.dut_type:
-                self.eeprom_file = "Pi-CodecZero.eep" # Note: This file doesn't exist yet, update when it does - Edit 020222: file exists, check email
-                # If you're not me and I forgot to put the .eep somewhere useful, use eeprom_exists() to copy the eeprom from an already programmed Codec Zero
-                # Note that the file name should be changed from dump.eep to something more useful, like Pi-CodecZero.eep
+                self.eeprom_file = "Pi-CodecZero.eep" # Note: This file doesn't exist yet,
+                # update when it does - Edit 020222: file exists, check email.
+                # If you're not me and I forgot to put the .eep somewhere useful, use eeprom_exists()
+                # to copy the eeprom from an already programmed Codec Zero.
                 self.dt_overlay = "iqaudio-codec"
                 self.enable.dut(True)
             elif "digiamp" in self.dut_type:
@@ -43,7 +46,8 @@ class Flash:
 
     def eeprom_exists(self):
         try:
-            # this won't work if eepflash hasn't been made executable - make sure install.py is run first, or use "sudo bash eepflash.sh ....."
+            # this won't work if eepflash hasn't been made executable - make sure install.py
+            # is run first, or use "sudo bash eepflash.sh ....."
             os.system("sudo {}eepflash.sh -r -f={}dump.eep -t=24c32 -y".format(self.eeprom_dir, self.eeprom_dir))  # copies the eeprom from the DUT to dump.eep
             # if needed, use 'hexdump dump.eep' in the terminal to inspect
             if os.path.getsize("{}dump.eep".format(self.eeprom_dir)) > 500:  # Checks that the eeprom on the DUT has more than 500 bytes (not empty)
@@ -58,8 +62,7 @@ class Flash:
         if self.eep_exists is None:
             self.eeprom_exists()
         if self.eep_exists is False or overwrite is True:
-            os.system("sudo {}eepflash.sh -w -f={}{} -t=24c32 -y".format(self.eeprom_dir, self.eeprom_dir, self.eeprom_file))  # Writes the eeprom to the DUT
-            # Reboot the DUT
+            self.eep.eep_write(file=self.eeprom_dir+self.eeprom_file)
             if "digiamp" in self.dut_type:
                 self.enable.da(False)
                 time.sleep(1)
@@ -72,9 +75,11 @@ class Flash:
             print("EEPROM already exists, use write_eeprom(overwrite=True) to overwrite.")
         # The next section 'manually' enables the dtoverlay for the IQ Audio board, as for it to detect
         # automatically the Pi must be restarted (not ideal)
-        os.system("sudo dtoverlay -R")
-        os.system("sudo dtoverlay-pre")
-        os.system("sudo dtoverlay {}".format(self.dt_overlay))
-        os.system("sudo dtoverlay-post")
-        time.sleep(0.5)
+        # That being said, it makes the Codec Zero throw a wobbly, and it seems to be fine without for some reason
+        if "codeczero" not in self.dut_type:
+            os.system("sudo dtoverlay -R")
+            os.system("sudo dtoverlay-pre")
+            os.system("sudo dtoverlay {}".format(self.dt_overlay))
+            os.system("sudo dtoverlay-post")
+            time.sleep(0.5)
 
