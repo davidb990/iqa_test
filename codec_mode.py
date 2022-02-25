@@ -17,7 +17,8 @@ class CodecMode:
         if os.path.exists("/home/pi/Pi-Codec/"):
             os.system("sudo alsactl restore -f /home/pi/Pi-Codec/" + str(mode_file))
         else:
-            os.system("git clone https://github.com/iqaudio/Pi-Codec.git")
+
+            os.system("git clone https://github.com/iqaudio/Pi-Codec.git /home/pi/Pi-Codec")
             os.system("sudo alsactl restore -f /home/pi/Pi-Codec/" + str(mode_file))
 
     def __init__(self, aux_in=False, aux_out=False, playback=False,
