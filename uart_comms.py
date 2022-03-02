@@ -65,8 +65,11 @@ class UART:
     def fft_rx(self, rx, device=None, channels=2):
         rx = rx.split(":")
         thresh = rx[1]
-        if "CHUN" in rx[2]:
-            chunks = int(rx[3])
+        delay = float(rx[3])
+        if delay != 0:
+            time.sleep(delay)
+        if "CHUN" in rx[4]:
+            chunks = int(rx[5])
             fft = fft_lib.FFT(device=device, channels=channels, chunk_num=chunks)
         else:
             fft = fft_lib.FFT(device=device, channels=channels)
@@ -77,11 +80,11 @@ class UART:
             noise_thresh = str(noise_thresh[0]) + "," + str(noise_thresh[1])
         self.write("FREQ:{}:TRSH:{}\r".format(freq, noise_thresh))
 
-    def fft_tx_w(self, thresh=0.25, chunk=None):
+    def fft_tx_w(self, thresh=0.25, chunk=None, delay: float = 0):
         if chunk is not None:
-            self.write("TRSH:{}:CHUN:{}:FREQ?\r".format(thresh, chunk))
+            self.write("TRSH:{}:DLAY:{}:CHUN:{}:FREQ?\r".format(thresh, delay, chunk))
         else:
-            self.write("TRSH:{}:FREQ?\r".format(thresh))
+            self.write("TRSH:{}:DLAY:{}:FREQ?\r".format(thresh, delay))
 
     def fft_tx_r(self) -> tuple:
         tx_r = self.readall()
@@ -102,6 +105,9 @@ class UART:
         rx = rx.split(":")
         freq = rx[1]
         duration = rx[3]
+        delay = float(rx[5])
+        if delay != 0:
+            time.sleep(delay)
         if "," in freq:
             freq = freq.split(",")
             l_freq = float(freq[0])
@@ -111,10 +117,10 @@ class UART:
             freq = float(freq)
             tone.monotone(freq, duration)
 
-    def tone_tx(self, freq, duration):
+    def tone_tx(self, freq, duration, delay: float = 0):
         if isinstance(freq, list) or isinstance(freq, tuple):
             freq = str(freq[0]) + "," + str(freq[1])
-        self.write("FREQ:{}:DURA:{}:TONE?\r".format(freq, duration))
+        self.write("FREQ:{}:DURA:{}:DLAY:{}:TONE?\r".format(freq, duration, delay))
 
     def relay_rx(self, rx):
         relay_sel = relay_ctl.Relay()
