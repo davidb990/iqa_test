@@ -1,9 +1,3 @@
-# This file is used to control the communication between the Pi Zero 2 and the Pi 4 over UART
-# It can be imported and used by a library.
-# It brings much of the other audio libraries together so that they can be called over UART, such as the FFT, Tone
-# and Buzz libraries. It also has a relay control section, which calls the relay_ctl library.
-
-
 import serial
 import fft_lib
 from tone import Tone
@@ -52,7 +46,6 @@ class UART:
         self.uart.close()
 
     def rx_conf(self):
-        # Orginially used on reciept of command from the Pi4, however this slowed down the workflow considereably. Might be useful later.
         self.write("RGR\r")
 
     def conf_tx(self) -> bool:
@@ -63,33 +56,24 @@ class UART:
             return False
 
     def fft_rx(self, rx, device=None, channels=2):
+        self.rx_conf()
+        time.sleep(0.2)
         rx = rx.split(":")
         thresh = rx[1]
-        delay = float(rx[3])
-        if delay != 0:
-            time.sleep(delay)
-        if "CHUN" in rx[4]:
-            chunks = int(rx[5])
-            fft = fft_lib.FFT(device=device, channels=channels, chunk_num=chunks)
-        else:
-            fft = fft_lib.FFT(device=device, channels=channels)
+        fft = fft_lib.FFT(device=device, channels=channels)
         freq = fft.det_freq()
         noise_thresh = fft.above_bgnd_thresh(float(thresh))
-        if isinstance(freq, tuple) and isinstance(noise_thresh, tuple):  # checks if receiving mono or stereo data
+        if isinstance(freq, tuple) and isinstance(noise_thresh, tuple):
             freq = str(freq[0]) + "," + str(freq[1])
             noise_thresh = str(noise_thresh[0]) + "," + str(noise_thresh[1])
+        time.sleep(0.4)
         self.write("FREQ:{}:TRSH:{}\r".format(freq, noise_thresh))
 
-    def fft_tx_w(self, thresh=0.25, chunk=None, delay: float = 0):
-        if chunk is not None:
-            self.write("TRSH:{}:DLAY:{}:CHUN:{}:FREQ?\r".format(thresh, delay, chunk))
-        else:
-            self.write("TRSH:{}:DLAY:{}:FREQ?\r".format(thresh, delay))
+    def fft_tx_w(self, thresh=0.25):
+        self.write("TRSH:{}:FREQ?\r".format(thresh))
 
     def fft_tx_r(self) -> tuple:
         tx_r = self.readall()
-        if tx_r == "b''":
-            raise Exception("Invalid FFT response")  # this line is to help speed up the workflow script try/except when checking for FFT response from the Zero 2
         tx_r = tx_r.split(":")
         freq = tx_r[1]
         above_thresh = tx_r[3]
@@ -101,13 +85,11 @@ class UART:
             return freq, bool(above_thresh)
 
     def tone_rx(self, rx):
+        self.rx_conf()
         tone = Tone()
         rx = rx.split(":")
         freq = rx[1]
         duration = rx[3]
-        delay = float(rx[5])
-        if delay != 0:
-            time.sleep(delay)
         if "," in freq:
             freq = freq.split(",")
             l_freq = float(freq[0])
@@ -117,12 +99,13 @@ class UART:
             freq = float(freq)
             tone.monotone(freq, duration)
 
-    def tone_tx(self, freq, duration, delay: float = 0):
+    def tone_tx(self, freq, duration):
         if isinstance(freq, list) or isinstance(freq, tuple):
             freq = str(freq[0]) + "," + str(freq[1])
-        self.write("FREQ:{}:DURA:{}:DLAY:{}:TONE?\r".format(freq, duration, delay))
+        self.write("FREQ:{}:DURA:{}:TONE?\r".format(freq, duration))
 
     def relay_rx(self, rx):
+        self.rx_conf()
         relay_sel = relay_ctl.Relay()
         rx = rx.split(":")
         if rx[1] == "AUXO":
@@ -147,14 +130,9 @@ class UART:
             on_off = "off"
         else:
             sys.exit("Invalid relay state!")
-        try:
-            exclusive = bool(rx[4])
-            relay_sel.relay(relay, on_off, exclusive=exclusive)
-        except:
-            print("Invalid/missing exclusive param, leaving as True.")
-            relay_sel.relay(relay, on_off)
+        relay_sel.relay(relay, on_off)
 
-    def relay_tx(self, relay, on_off, exclusive=True):
+    def relay_tx(self, relay, on_off):
         if relay.lower() == "aux_out":
             relay_msg = "AUXO"
         elif relay.lower() == "rca":
@@ -175,20 +153,18 @@ class UART:
             output = on_off.upper()
         else:
             sys.exit("Invalid choice of relay mode")
-        if isinstance(exclusive, bool) is False:
-            sys.exit("Invalid choice of relay mode")
-        self.write("RLAY:{}:{}:EXCL:{}\r".format(relay_msg, output, exclusive))
+        self.write("RLAY:{}:{}\r".format(relay_msg, output))
 
     def buzz_tx(self, duration: float):
         self.write("DURA:{}:BUZZ?\r".format(str(duration)))
 
     def buzz_rx(self, rx):
+        self.rx_conf()
         rx = rx.split(":")
         buzzer = buzz.Buzz()
         buzzer.buzz(float(rx[1]))
 
     def zero_on_tx(self):
-        # call this function in a start-up script on the Zero 2
         self.write("ZERO:STAT:ON\r")
 
     def zero_on_rx(self) -> bool:
@@ -209,7 +185,6 @@ class UART:
             return False
 
     def rx_check(self):
-        # this fuction checks for instructions; call it in a loop in a higher level program to poll for instructions.
         rx = self.readall()
         if "FREQ?" in rx:
             self.fft_rx(rx)
